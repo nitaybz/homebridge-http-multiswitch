@@ -1,6 +1,6 @@
 {
   "name": "homebridge-http-multiswitch",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": "nitaybz",
   "description": "Simple HTTP switches for Homebridge - stateful and radio-button/multi-switch (forked from homebridge-switcheroo)",
   "license": "MIT",
