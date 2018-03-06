@@ -1,13 +1,13 @@
 {
-  "name": "homebridge-http-multiswitch",
+  "name": "homebridge-synology-surveillance-homemode",
   "version": "1.0.3",
-  "author": "nitaybz",
-  "description": "Simple HTTP switches for Homebridge - stateful and radio-button/multi-switch (forked from homebridge-switcheroo)",
+  "author": "jonbell",
+  "description": "Homebridge switch for synology surveillance station's home mode (forked from homebridge-http-multiswitch)",
   "license": "MIT",
-  "homepage": "https://github.com/nitaybz/homebridge-http-multiswitch#readme",
+  "homepage": "https://github.com/jon-bell/homebridge-synology-surveillance-homemode",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nitaybz/homebridge-http-multiswitch.git"
+    "url": "git+https://github.com/jon-bell/homebridge-synology-surveillance-homemode"
   },
   "keywords": [
     "homebridge-plugin",
@@ -24,6 +24,6 @@
     "request": "^2.65.0"
   },
   "bugs": {
-    "url": "https://github.com/nitaybz/homebridge-http-multiswitch/issues"
+    "url": "https://github.com/jon-bell/homebridge-synology-surveillance-homemode/issues"
   }
 }
