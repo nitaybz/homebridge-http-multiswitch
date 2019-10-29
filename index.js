@@ -17,11 +17,13 @@ function HttpMultiswitch(log, config) {
     this.switchType      = config.switch_type;           
     this.baseUrl         = config.base_url;
     this.httpMethod      = config.http_method      || 'GET';
-
+    
     this.username        = config.username         || '';
     this.password        = config.password         || '';
     this.sendImmediately = config.send_immediately || '';
 
+    this.referer         = config.referer          || '';
+    
     switch (this.switchType) {
         case 'Switch':
             this.onUrl   = this.baseUrl + config.on_url;
@@ -41,22 +43,21 @@ function HttpMultiswitch(log, config) {
 }
 
 HttpMultiswitch.prototype = {
-
-    httpRequest: function(url, body, method, username, password, sendimmediately, callback) {
-        request({
-            url: url,
-            body: body,
-            method: method,
-            rejectUnauthorized: false,
-            auth: {
-                user: username,
-                pass: password,
-                sendImmediately: sendimmediately
-            }
-        },
-        function(error, response, body) {
-            callback(error, response, body);
-        });
+    httpRequest: function(url, body, method, username, password, sendimmediately, referer, callback) {
+	var options={url: url,
+		     body: body,
+		     method: method,
+		     rejectUnauthorized: false,
+		     auth: {
+			 user: username,
+			 pass: password,
+			 sendImmediately: sendimmediately
+		     }};
+	if (referer) Object.assign(options,{headers: {'Referer': referer}});
+        request(options,
+		function(error, response, body) {
+		    callback(error, response, body);
+		});
     },
 
     setPowerState: function(targetService, powerState, callback, context) {
@@ -103,7 +104,7 @@ HttpMultiswitch.prototype = {
                 this.log('Unknown homebridge-http-multiswitch type in setPowerState');
         }
 
-        this.httpRequest(reqUrl, reqBody, this.httpMethod, this.username, this.password, this.sendImmediately, function(error, response, responseBody) {
+        this.httpRequest(reqUrl, reqBody, this.httpMethod, this.username, this.password, this.sendImmediately, this.referer, function(error, response, responseBody) {
             if (error) {
                 this.log.error('setPowerState failed: ' + error.message);
                 this.log('response: ' + response + '\nbody: ' + responseBody);

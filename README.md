@@ -68,6 +68,7 @@ For example, when `PC Mode` is selected, the url generated will be `http://192.1
 | `username`                       | username for request                                    |          |
 | `password`                       | password for request                                    |          |
 | `send_immediately`               | option for request                                      |          |
+| `referer`                        | option for request                                      |          |
 | `on_url` (only Switch)           | endpoint for the on state                               |     ✓    |
 | `off_url` (only Switch)          | endpoint for the off state                              |     ✓    |
 | `on_body` (only Switch)          | body for on state request                               |          |
