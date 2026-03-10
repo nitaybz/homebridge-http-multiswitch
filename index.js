@@ -25,6 +25,7 @@ class HttpMultiswitch {
 
     this.services = [this.informationService];
     this.switchServices = [];
+    this.isWorking = false;
 
     if (this.switchType === 'Switch') {
       this.setupSwitch();
@@ -42,11 +43,12 @@ class HttpMultiswitch {
     this.offBody = this.config.off_body || '';
 
     const switchService = new this.hap.Service.Switch(this.name);
-    switchService
-      .getCharacteristic(this.hap.Characteristic.On)
-      .onSet(async (value) => {
-        await this.setPowerState(switchService, value);
-      });
+    const characteristic = switchService.getCharacteristic(this.hap.Characteristic.On);
+    
+    characteristic.onSet(async (value) => {
+      if (value === characteristic.value) return;
+      await this.setPowerState(switchService, value);
+    });
 
     this.services.push(switchService);
   }
@@ -58,18 +60,20 @@ class HttpMultiswitch {
     for (let i = 0; i < multiswitchNames.length; i++) {
       const switchName = multiswitchNames[i];
       const switchService = new this.hap.Service.Switch(switchName, switchName);
+      const characteristic = switchService.getCharacteristic(this.hap.Characteristic.On);
 
-      switchService
-        .getCharacteristic(this.hap.Characteristic.On)
-        .onSet(async (value) => {
-          if (value === true) {
-            await this.setPowerState(switchService, true, i);
-          } else {
-            // Keep original behavior: turning off one in a group of radio buttons
-            // depends on the hardware/API, but we'll try to just set it to false.
-            await this.setPowerState(switchService, false, i);
-          }
-        });
+      characteristic.onSet(async (value) => {
+        // If it's already in the state we want, don't do anything
+        if (value === characteristic.value) return;
+
+        if (value === true) {
+          await this.setPowerState(switchService, true, i);
+        } else {
+          // Turning off a radio button. In this design, we don't send a request,
+          // but we still update the internal state check.
+          await this.setPowerState(switchService, false, i);
+        }
+      });
 
       this.switchServices.push(switchService);
       this.services.push(switchService);
@@ -77,6 +81,11 @@ class HttpMultiswitch {
   }
 
   async setPowerState(targetService, powerState, index) {
+    if (this.isWorking && powerState) {
+        this.log.debug(`Ignoring request for ${targetService.displayName}; another request is in progress.`);
+        return;
+    }
+
     let url = '';
     let body = '';
 
@@ -86,14 +95,16 @@ class HttpMultiswitch {
     } else {
       if (powerState && index !== undefined) {
         url = this.baseUrl + this.multiurls[index];
+        
+        this.isWorking = true;
         // Radio button behavior: Turn off other switches in the group visually
         for (const service of this.switchServices) {
           if (service !== targetService) {
-            service.updateCharacteristic(this.hap.Characteristic.On, false);
+            service.getCharacteristic(this.hap.Characteristic.On).updateValue(false);
           }
         }
       } else {
-        // Turning off a multiswitch button often has no "off" URL in this design
+        // Turning off a multiswitch button. No request sent.
         return;
       }
     }
@@ -108,6 +119,8 @@ class HttpMultiswitch {
         this.log.error(`Cause: ${error.cause.message || error.cause}`);
       }
       throw new this.hap.HapStatusError(this.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+    } finally {
+        this.isWorking = false;
     }
   }
 
