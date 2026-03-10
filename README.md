@@ -82,8 +82,10 @@ For example, when `PC Mode` is selected, the url generated will be `http://192.1
   - Verify the correct `http_method` is begin used. Switcheroo defaults to `GET`
 
 ## Installation
-Read about an example Raspberry Pi + Homebridge setup guide with this package [here](https://github.com/chriszelazo/Apartment-Homebridge-Setup).
+Modernized for Homebridge 1.6+ and Node.js 18+.
 
 1. Install homebridge using: `npm install -g homebridge`
-2. Install homebridge-http using: `npm install -g homebridge-http-multiswitch`
-3. Update your config file
+2. Install the plugin: `npm install -g homebridge-http-multiswitch`
+3. Use the **Homebridge Config UI X** to configure the plugin for a much better experience.
+
+Alternatively, update your `config.json` manually as shown below.

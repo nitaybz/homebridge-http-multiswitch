@@ -1,0 +1,115 @@
+{
+  "pluginAlias": "HttpMultiswitch",
+  "pluginType": "accessory",
+  "singular": false,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "required": true,
+        "default": "MultiSwitch"
+      },
+      "switch_type": {
+        "title": "Switch Type",
+        "type": "string",
+        "oneOf": [
+          {
+            "title": "Switch (Standard On/Off)",
+            "enum": [
+              "Switch"
+            ]
+          },
+          {
+            "title": "Multiswitch (Radio Buttons)",
+            "enum": [
+              "Multiswitch"
+            ]
+          }
+        ],
+        "required": true
+      },
+      "base_url": {
+        "title": "Base URL",
+        "type": "string",
+        "placeholder": "http://192.168.0.XXX/command",
+        "required": true
+      },
+      "http_method": {
+        "title": "HTTP Method",
+        "type": "string",
+        "default": "GET",
+        "oneOf": [
+          { "title": "GET", "enum": ["GET"] },
+          { "title": "POST", "enum": ["POST"] },
+          { "title": "PUT", "enum": ["PUT"] },
+          { "title": "DELETE", "enum": ["DELETE"] }
+        ]
+      },
+      "on_url": {
+        "title": "On URL (Switch only)",
+        "type": "string",
+        "placeholder": "/on",
+        "condition": {
+          "functionBody": "return model.switch_type === 'Switch';"
+        }
+      },
+      "off_url": {
+        "title": "Off URL (Switch only)",
+        "type": "string",
+        "placeholder": "/off",
+        "condition": {
+          "functionBody": "return model.switch_type === 'Switch';"
+        }
+      },
+      "on_body": {
+        "title": "On Body (Switch only)",
+        "type": "string",
+        "condition": {
+          "functionBody": "return model.switch_type === 'Switch';"
+        }
+      },
+      "off_body": {
+        "title": "Off Body (Switch only)",
+        "type": "string",
+        "condition": {
+          "functionBody": "return model.switch_type === 'Switch';"
+        }
+      },
+      "multiswitch": {
+        "title": "Multiswitch Button Names",
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "condition": {
+          "functionBody": "return model.switch_type === 'Multiswitch';"
+        }
+      },
+      "multiurls": {
+        "title": "Multiswitch URL Endpoints",
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "condition": {
+          "functionBody": "return model.switch_type === 'Multiswitch';"
+        }
+      },
+      "username": {
+        "title": "Username",
+        "type": "string"
+      },
+      "password": {
+        "title": "Password",
+        "type": "string",
+        "format": "password"
+      },
+      "referer": {
+        "title": "Referer Header",
+        "type": "string"
+      }
+    }
+  }
+}

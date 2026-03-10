@@ -1,9 +1,10 @@
 {
   "name": "homebridge-http-multiswitch",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "author": "nitaybz",
-  "description": "Simple HTTP switches for Homebridge - stateful and radio-button/multi-switch (forked from homebridge-switcheroo)",
+  "description": "Simple HTTP switches for Homebridge - stateful and radio-button/multi-switch (Modernized)",
   "license": "MIT",
+  "displayName": "HTTP MultiSwitch",
   "homepage": "https://github.com/nitaybz/homebridge-http-multiswitch#readme",
   "repository": {
     "type": "git",
@@ -15,15 +16,21 @@
     "switch",
     "radio"
   ],
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "engines": {
-    "node": ">=0.12.0",
-    "homebridge": ">=0.2.0"
+    "node": ">=18.0.0",
+    "homebridge": ">=1.6.0"
   },
-  "dependencies": {
-    "request": "^2.65.0"
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "prepublishOnly": "npm run build"
   },
-  "bugs": {
-    "url": "https://github.com/nitaybz/homebridge-http-multiswitch/issues"
+  "dependencies": {},
+  "devDependencies": {
+    "homebridge": "^1.6.0",
+    "typescript": "^5.0.0",
+    "@types/node": "^18.0.0"
   }
 }
