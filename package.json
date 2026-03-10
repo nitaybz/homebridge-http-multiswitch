@@ -23,15 +23,16 @@
     "homebridge": ">=1.6.0"
   },
   "scripts": {
-    "build": "npx tsc",
-    "watch": "npx tsc -w",
+    "build": "tsc",
+    "watch": "tsc -w",
     "prepare": "npm run build",
     "prepublishOnly": "npm run build"
   },
-  "dependencies": {},
+  "dependencies": {
+    "typescript": "^5.0.0"
+  },
   "devDependencies": {
     "homebridge": "^1.6.0",
-    "typescript": "^5.0.0",
     "@types/node": "^18.0.0"
   }
 }
