@@ -1,6 +1,6 @@
 {
   "name": "homebridge-http-multiswitch",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": "nitaybz",
   "description": "Simple HTTP switches for Homebridge - stateful and radio-button/multi-switch (Modernized)",
   "license": "MIT",
@@ -16,22 +16,16 @@
     "switch",
     "radio"
   ],
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "index.js",
   "engines": {
     "node": ">=18.0.0",
     "homebridge": ">=1.6.0"
   },
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w",
-    "prepare": "npm run build",
-    "prepublishOnly": "npm run build"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "dependencies": {
-    "typescript": "^5.0.0",
-    "homebridge": "^1.6.0",
-    "@types/node": "^18.0.0"
-  },
-  "devDependencies": {}
+  "dependencies": {},
+  "devDependencies": {
+    "homebridge": "^1.6.0"
+  }
 }
