@@ -29,10 +29,9 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "typescript": "^5.0.0"
-  },
-  "devDependencies": {
+    "typescript": "^5.0.0",
     "homebridge": "^1.6.0",
     "@types/node": "^18.0.0"
-  }
+  },
+  "devDependencies": {}
 }
