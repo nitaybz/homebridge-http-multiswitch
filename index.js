@@ -99,15 +99,22 @@ class HttpMultiswitch {
     }
 
     try {
+      this.log.debug(`Sending ${this.httpMethod} request to: ${url}`);
       await this.httpRequest(url, body);
       this.log.info(`Successfully set ${targetService.displayName} to ${powerState ? 'ON' : 'OFF'}`);
     } catch (error) {
-      this.log.error(`Failed to set ${targetService.displayName} state: ${error.message}`);
+      this.log.error(`Failed to set ${targetService.displayName} state (URL: ${url}): ${error.message}`);
+      if (error.cause) {
+        this.log.error(`Cause: ${error.cause.message || error.cause}`);
+      }
       throw new this.hap.HapStatusError(this.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     }
   }
 
   async httpRequest(url, body) {
+    if (!url) {
+      throw new Error('No URL provided for request');
+    }
     const headers = {};
     if (this.referer) {
       headers['Referer'] = this.referer;
