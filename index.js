@@ -60,6 +60,12 @@ class HttpMultiswitch {
     for (let i = 0; i < multiswitchNames.length; i++) {
       const switchName = multiswitchNames[i];
       const switchService = new this.hap.Service.Switch(switchName, switchName);
+      
+      switchService.setCharacteristic(this.hap.Characteristic.Name, switchName);
+      if (this.hap.Characteristic.ConfiguredName) {
+        switchService.setCharacteristic(this.hap.Characteristic.ConfiguredName, switchName);
+      }
+
       const characteristic = switchService.getCharacteristic(this.hap.Characteristic.On);
 
       characteristic.onSet(async (value) => {
