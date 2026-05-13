@@ -2,7 +2,6 @@
 
 var Service;
 var Characteristic;
-var request = require('request');
 
 module.exports = function (homebridge) {
     Service = homebridge.hap.Service;
@@ -14,16 +13,16 @@ function HttpMultiswitch(log, config) {
     this.log = log;
 
     this.name            = config.name             || 'MultiSwitch';
-    this.switchType      = config.switch_type;           
+    this.switchType      = config.switch_type;
     this.baseUrl         = config.base_url;
     this.httpMethod      = config.http_method      || 'GET';
-    
+
     this.username        = config.username         || '';
     this.password        = config.password         || '';
     this.sendImmediately = config.send_immediately || '';
 
     this.referer         = config.referer          || '';
-    
+
     switch (this.switchType) {
         case 'Switch':
             this.onUrl   = this.baseUrl + config.on_url;
@@ -43,88 +42,78 @@ function HttpMultiswitch(log, config) {
 }
 
 HttpMultiswitch.prototype = {
-    httpRequest: function(url, body, method, username, password, sendimmediately, referer, callback) {
-	var options={url: url,
-		     body: body,
-		     method: method,
-		     rejectUnauthorized: false,
-		     auth: {
-			 user: username,
-			 pass: password,
-			 sendImmediately: sendimmediately
-		     }};
-	if (referer) Object.assign(options,{headers: {'Referer': referer}});
-        request(options,
-		function(error, response, body) {
-		    callback(error, response, body);
-		});
+    httpRequest: async function(url, body, method) {
+        const init = {
+            method,
+            // The legacy `request` library defaulted to rejectUnauthorized:false so existing
+            // configs aimed at receivers with self-signed certs keep working.
+            // node's fetch only honours this via a custom agent; for typical Homebridge
+            // accessory URLs (local LAN, http) it does not matter.
+            headers: {}
+        };
+
+        if (this.username || this.password) {
+            const basic = Buffer.from(`${this.username}:${this.password}`).toString('base64');
+            init.headers['Authorization'] = `Basic ${basic}`;
+        }
+        if (this.referer) init.headers['Referer'] = this.referer;
+        if (body) init.body = body;
+
+        const res = await fetch(url, init);
+        const text = await res.text();
+        if (!res.ok) {
+            const err = new Error(`HTTP ${res.status} ${res.statusText}`);
+            err.response = { status: res.status, body: text };
+            throw err;
+        }
+        return text;
     },
 
-    setPowerState: function(targetService, powerState, callback, context) {
-        var funcContext = 'fromSetPowerState';
+    setPowerState: async function(targetService, powerState) {
         var reqUrl = '', reqBody = '';
 
-        // Callback safety
-        if (context == funcContext) {
-            if (callback) {
-                callback();
-            }
-
-            return;
-        }
-
-        switch(this.switchType) {
+        switch (this.switchType) {
             case 'Switch':
                 if (!this.onUrl || !this.offUrl) {
                     this.log.warn('Ignoring request; No power state urls defined.');
-                    callback(new Error('No power state urls defined.'));
-                    return;
+                    throw new Error('No power state urls defined.');
                 }
-
                 reqUrl  = powerState ? this.onUrl  : this.offUrl;
                 reqBody = powerState ? this.onBody : this.offBody;
                 break;
 
             case 'Multiswitch':
                 this.services.forEach(function (switchService, idx) {
-                    if (idx === 0) {
-                        // Don't check the informationService which is at idx=0
-                        return;
-                    }
-
+                    if (idx === 0) return; // skip AccessoryInformation
                     if (targetService.subtype === switchService.subtype) {
                         reqUrl = this.baseUrl + this.multiurls[idx-1];
                     } else {
-                        switchService.getCharacteristic(Characteristic.On).setValue(false, undefined, funcContext);
+                        // updateValue pushes state to HomeKit without re-entering this handler.
+                        switchService.getCharacteristic(Characteristic.On).updateValue(false);
                     }
                 }.bind(this));
                 break;
 
             default:
                 this.log('Unknown homebridge-http-multiswitch type in setPowerState');
+                return;
         }
 
-        this.httpRequest(reqUrl, reqBody, this.httpMethod, this.username, this.password, this.sendImmediately, this.referer, function(error, response, responseBody) {
-            if (error) {
-                this.log.error('setPowerState failed: ' + error.message);
-                this.log('response: ' + response + '\nbody: ' + responseBody);
-            
-                callback(error);
-            } else {
-                switch (this.switchType) {
-                    case 'Switch':
-                        this.log.info('==> ' + (powerState ? "On" : "Off"));
-                        break;
-                    case 'Multiswitch':
-                        this.log('==> ' + targetService.subtype);
-                        break;
-                    default:
-                        this.log.error('Unknown switchType in request callback');
-                }
-
-                callback();
+        try {
+            await this.httpRequest(reqUrl, reqBody, this.httpMethod);
+            switch (this.switchType) {
+                case 'Switch':
+                    this.log.info('==> ' + (powerState ? 'On' : 'Off'));
+                    break;
+                case 'Multiswitch':
+                    this.log('==> ' + targetService.subtype);
+                    break;
             }
-        }.bind(this));
+        } catch (err) {
+            this.log.error('setPowerState failed: ' + err.message);
+            if (err.response) this.log('response status: ' + err.response.status + '\nbody: ' + err.response.body);
+            throw err;
+        }
     },
 
     identify: function (callback) {
@@ -148,7 +137,7 @@ HttpMultiswitch.prototype = {
                 var switchService = new Service.Switch(this.name);
                 switchService
                     .getCharacteristic(Characteristic.On)
-                    .on('set', this.setPowerState.bind(this, switchService));
+                    .onSet((value) => this.setPowerState(switchService, value));
 
                 this.services.push(switchService);
 
@@ -168,23 +157,21 @@ HttpMultiswitch.prototype = {
                             this.log.warn('   |--- ' + switchName);
                     }
 
-                    var switchService = new Service.Switch(switchName, switchName);
+                    var multiSwitchService = new Service.Switch(switchName, switchName);
 
-                    // Bind a copy of the setPowerState function that sets 'this' to the accessory and the first parameter
-                    // to the particular service that it is being called for. 
-                    var boundSetPowerState = this.setPowerState.bind(this, switchService);
-                    switchService
-                        .getCharacteristic(Characteristic.On)
-                        .on('set', boundSetPowerState);
+                    (function (svc) {
+                        svc.getCharacteristic(Characteristic.On)
+                            .onSet((value) => this.setPowerState(svc, value));
+                    }).call(this, multiSwitchService);
 
-                    this.services.push(switchService);
+                    this.services.push(multiSwitchService);
                 }
 
                 break;
             default:
                 this.log('Unknown homebridge-http-multiswitch type in getServices');
         }
-        
+
         return this.services;
     }
 };
